@@ -524,6 +524,7 @@ var Ls = {
 		"fz_zip8": "zip with utf8 filenames (maybe wonky on windows 7 and older)",
 		"fz_zipd": "zip with traditional cp437 filenames, for really old software",
 		"fz_zipc": "cp437 with crc32 computed early,$Nfor MS-DOS PKZIP v2.04g (october 1993)$N(takes longer to process before download can start)",
+		"fz_7z": "7-zip archive with LZMA2 compression$N(excellent compression ratio, but slower than zip)",
 
 		"un_m1": "you can delete your recent uploads (or abort unfinished ones) below",
 		"un_upd": "refresh",
@@ -16825,7 +16826,8 @@ var arcfmt = (function () {
 			["txz", "tar=xz", L.fz_tarxz],
 			["zip", "zip", L.fz_zip8],
 			["zip_dos", "zip=dos", L.fz_zipd],
-			["zip_crc", "zip=crc", L.fz_zipc]
+			["zip_crc", "zip=crc", L.fz_zipc],
+			["7z", "7z", L.fz_7z]
 		];
 
 	for (var a = 0; a < fmts.length; a++) {
@@ -16852,10 +16854,10 @@ var arcfmt = (function () {
 
 		for (var a = 0, aa = tds.length; a < aa; a++) {
 			var o = tds[a], txt = o.textContent, href = o.getAttribute('href');
-			if (!/^(zip|tar|pax|tgz|txz)$/.exec(txt))
+			if (!/^(zip|tar|pax|tgz|txz|7z)$/.exec(txt))
 				continue;
 
-			var m = /(.*[?&])(tar|zip)([^&#]*)(.*)$/.exec(href);
+			var m = /(.*[?&])(tar|zip|7z)([^&#]*)(.*)$/.exec(href);
 			if (!m)
 				throw new Error('missing arg in url');
 

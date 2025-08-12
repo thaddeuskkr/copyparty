@@ -40,6 +40,12 @@ from .stolen.qrcodegen import QrCode, qr2svg
 from .sutil import StreamArc, gfilter
 from .szip import StreamZip
 from .up2k import up2k_chunksize
+
+try:
+    from .s7z import Stream7z
+    HAS_7Z = True
+except ImportError:
+    HAS_7Z = False
 from .util import unquote  # type: ignore
 from .util import (
     APPLESAN_RE,
@@ -2532,9 +2538,9 @@ class HttpCli(object):
     def handle_zip_post(self) -> bool:
         assert self.parser  # !rm
         try:
-            k = next(x for x in self.uparam if x in ("zip", "tar"))
+            k = next(x for x in self.uparam if x in ("zip", "tar", "7z"))
         except:
-            raise Pebkac(422, "need zip or tar keyword")
+            raise Pebkac(422, "need zip, tar, or 7z keyword")
 
         v = self.uparam[k]
 
@@ -4662,6 +4668,12 @@ class HttpCli(object):
             else:
                 mime = "application/x-tar"
                 ext = "tar"
+        elif fmt == "7z":
+            if not HAS_7Z:
+                raise Pebkac(400, "7z support not available (install py7zr)")
+            mime = "application/x-7z-compressed"
+            packer = Stream7z
+            ext = "7z"
         else:
             mime = "application/zip"
             packer = StreamZip
@@ -4750,6 +4762,11 @@ class HttpCli(object):
         dls[self.dl_id] = (time.time(), 0)
 
         bgen = packer(
+            self.log,
+            self.asrv,
+            fgen,
+            cmp=uarg,
+        ) if fmt == "7z" else packer(
             self.log,
             self.asrv,
             fgen,
@@ -6383,11 +6400,11 @@ class HttpCli(object):
             self.reply(html.encode("utf-8", "replace"))
             return True
 
-        for k in ["zip", "tar"]:
+        for k in ["zip", "tar", "7z"]:
             v = self.uparam.get(k)
             if v is not None and (not add_og or not og_fn):
                 if is_dk and "dks" not in vn.flags:
-                    t = "server config does not allow download-as-zip/tar; only dk is specified, need dks too"
+                    t = "server config does not allow download-as-zip/tar/7z; only dk is specified, need dks too"
                     raise Pebkac(403, t)
                 return self.tx_zip(k, v, self.vpath, vn, rem, [])
 
